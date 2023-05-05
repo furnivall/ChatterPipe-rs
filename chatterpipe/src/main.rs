@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
 use tiktoken_rs::cl100k_base;
+use colored::*;
 
 #[derive(Serialize, Deserialize)]
 struct Message {
@@ -32,7 +33,7 @@ struct Choice {
 fn main() {
         let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        println!("Usage: cargo run <text_file_path>");
+        println!("{}", "Usage: cargo run <text_file_path> [--raw]".color("purple"));
         return;
     }
     let engine = if args.len() > 2 {
@@ -41,7 +42,7 @@ fn main() {
             "g4-32" => "gpt-4-32k",
             "g3" => "gpt-3.5-turbo",
             _ => {
-                println!("No engine specified. Defaulting to GPT-4.");
+                println!("{}", "No engine specified. Defaulting to GPT-4.".color("yellow"));
                 "gpt-4"
             }
         }
@@ -50,10 +51,10 @@ fn main() {
     };
 
     let text_file_path = &args[1];
-    let text = fs::read_to_string(text_file_path).expect("Failed to read the text file");
+    let text = fs::read_to_string(text_file_path).expect("Failed to read the text");
     let bpe = cl100k_base().unwrap();
     let token_count = bpe.encode_with_special_tokens(&text).len();
-    let parent_prompt = "Summarise the following in 300 tokens or less.";
+    let parent_prompt = "Summarise the following in 300 tokens or less. Give your best attempt.";
     let parent_prompt_token_count = bpe.encode_with_special_tokens(&parent_prompt).len();
     let total_tokens = token_count + parent_prompt_token_count;
     println!("Number of tokens in the text file: {}", token_count);
@@ -96,8 +97,8 @@ fn main() {
                 model: engine.to_string(),
                 messages: vec![system_message, user_message],
             };
-
-            let response = query_chat_completion_api(api_key, chat_completion_request_body);
+            let raw_response_flag = args.contains(&"--raw".to_string());
+            let response = query_chat_completion_api(api_key, chat_completion_request_body, raw_response_flag);
 
             match response {
                 Ok(chat_completion_response) => {
@@ -110,7 +111,7 @@ fn main() {
             }
         }
         Err(_) => {
-            println!(
+            println!("{}",
                 "═══════════════════════════════════════════════════════════════\n\
                  ⚠️  OPENAI_API_KEY environment variable not set                ⚠️\n\
                  ───────────────────────────────────────────────────────────────\n\
@@ -125,13 +126,13 @@ fn main() {
                  ───────────────────────────────────────────────────────────────\n\
                  For more information, visit:                                  \n\
                  https://beta.openai.com/docs/                                 \n\
-                 ═══════════════════════════════════════════════════════════════"
+                 ═══════════════════════════════════════════════════════════════".color("red")
             );
         }
     }
 }
 
-fn query_chat_completion_api(api_key: String, chat_completion_request_body: ChatCompletionRequestBody) -> Result<ChatCompletionResponse, Box<dyn std::error::Error>> {
+fn query_chat_completion_api(api_key: String, chat_completion_request_body: ChatCompletionRequestBody, raw_response_flag: bool) -> Result<ChatCompletionResponse, Box<dyn std::error::Error>> {
     let client = reqwest::blocking::Client::builder().timeout(std::time::Duration::from_secs(300)).build()?;
 
     let response = client.post("https://api.openai.com/v1/chat/completions")
@@ -141,8 +142,9 @@ fn query_chat_completion_api(api_key: String, chat_completion_request_body: Chat
         .send()?;
 
     let raw_response = response.text()?;
-    println!("Raw API response: {}", raw_response);
-
+    if raw_response_flag{
+        println!("Raw API response: {}", raw_response);
+    }
     let chat_completion_response: ChatCompletionResponse = serde_json::from_str(&raw_response)?; 
 
     Ok(chat_completion_response)
