@@ -5,7 +5,7 @@ extern crate serde_json;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
-use std::io::Read;
+use tiktoken_rs::cl100k_base;
 
 #[derive(Serialize, Deserialize)]
 struct Message {
@@ -31,19 +31,60 @@ struct Choice {
 
 fn main() {
         let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
+    if args.len() < 2 {
         println!("Usage: cargo run <text_file_path>");
         return;
     }
+    let engine = if args.len() > 2 {
+        match args[2].as_str() {
+            "g4" => "gpt-4",
+            "g4-32" => "gpt-4-32k",
+            "g3" => "gpt-3.5-turbo",
+            _ => {
+                println!("No engine specified. Defaulting to GPT-4.");
+                "gpt-4"
+            }
+        }
+    } else {
+        "gpt-4"
+    };
 
     let text_file_path = &args[1];
     let text = fs::read_to_string(text_file_path).expect("Failed to read the text file");
+    let bpe = cl100k_base().unwrap();
+    let token_count = bpe.encode_with_special_tokens(&text).len();
+    let parent_prompt = "Summarise the following in 300 tokens or less.";
+    let parent_prompt_token_count = bpe.encode_with_special_tokens(&parent_prompt).len();
+    let total_tokens = token_count + parent_prompt_token_count;
+    println!("Number of tokens in the text file: {}", token_count);
+    println!("Number of tokens in parent prompt: {}", parent_prompt_token_count);
+    println!("Total number of tokens: {}", total_tokens);
+    let max_tokens = match engine {
+        "gpt-4" => 8192,
+        "gpt-4-32k" => 32768,
+        "gpt-3.5-turbo" => 4096,
+        _ => {
+            println!("Invalid engine specified. Exiting.");
+            return;
+        }
+    };
+
+    if total_tokens > max_tokens {
+        println!(
+            "The total number of tokens ({}) exceeds the maximum allowed tokens for the model ({}). Please reduce the input size.",
+            total_tokens, max_tokens
+        );
+        return;
+    }
+
+
+
 
     match env::var("OPENAI_API_KEY") {
         Ok(api_key) => {
             let system_message = Message {
                 role: "system".to_string(),
-                content: "You are a helpful assistant.".to_string(),
+                content: parent_prompt.to_string(),
             };
 
             let user_message = Message {
@@ -52,7 +93,7 @@ fn main() {
             };
 
             let chat_completion_request_body = ChatCompletionRequestBody {
-                model: "gpt-3.5-turbo".to_string(),
+                model: engine.to_string(),
                 messages: vec![system_message, user_message],
             };
 
@@ -91,7 +132,7 @@ fn main() {
 }
 
 fn query_chat_completion_api(api_key: String, chat_completion_request_body: ChatCompletionRequestBody) -> Result<ChatCompletionResponse, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::blocking::Client::builder().timeout(std::time::Duration::from_secs(300)).build()?;
 
     let response = client.post("https://api.openai.com/v1/chat/completions")
         .header("Content-Type", "application/json")
@@ -99,7 +140,10 @@ fn query_chat_completion_api(api_key: String, chat_completion_request_body: Chat
         .json(&chat_completion_request_body)
         .send()?;
 
-    let chat_completion_response: ChatCompletionResponse = response.json()?;
+    let raw_response = response.text()?;
+    println!("Raw API response: {}", raw_response);
+
+    let chat_completion_response: ChatCompletionResponse = serde_json::from_str(&raw_response)?; 
 
     Ok(chat_completion_response)
 }
