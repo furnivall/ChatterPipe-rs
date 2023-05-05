@@ -5,6 +5,13 @@ ChatterPipe is a CLI tool that lets you interact with powerful language models l
 Install ChatterPipe using cargo:
 `cargo install chatterpipe`
 
+## Setup/Configuration
+Before using ChatterPipe for the first time (or at any time of your choice), run the setup command to configure your custom parent prompt.
+The default prompt is as follows: 
+```
+Summarise the following in 300 tokens or less. Give your best attempt
+```
+
 ## Usage
 Run ChatterPipe with the following command:
 ```ctp <text_file_path> [--engine <engine>] [--raw]```
