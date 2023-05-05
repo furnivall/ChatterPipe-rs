@@ -2,8 +2,15 @@
 name = "chatterpipe"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Danny Furnivall <danielfurnivall@gmail.com>"]
+description = "Effortlessly extract AI-generated insights from your text files! This Rust-based CLI tool sends your text content to OpenAI's ChatCompletion API and pipes the output into your desired destination. Unleash the power of AI in your projects and enhance your text-processing workflows with ChatterPipe-rs. All you need is your OpenAI API key."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/furnivall/chatterpipe-rs"
+keywords = ["gpt", "cli", "gpt-4", "communication"]
+categories = ["command-line-utilities", "networking", "ml"]
+[[bin]]
+name = "cp"
+path = "src/main.rs"
 
 [dependencies]
 colored = "2.0.0"
@@ -12,3 +19,6 @@ serde = { version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 tiktoken-rs = "0.4.2"
 unicode-segmentation = "1.8.0"
+
+[badges]
+maintenance = { status = "actively-developed" }
