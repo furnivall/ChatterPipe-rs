@@ -7,6 +7,16 @@ use std::env;
 use std::fs;
 use tiktoken_rs::cl100k_base;
 use colored::*;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
+use toml;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    parent_prompt: String,
+}
+
 
 #[derive(Serialize, Deserialize)]
 struct Message {
@@ -33,9 +43,14 @@ struct Choice {
 fn main() {
         let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        println!("{}", "Usage: cargo run <text_file_path> [--raw]".color("purple"));
+        println!("{}", "Usage: cargo run <text_file_path> [--raw] | ctp setup".color("purple"));
         return;
     }
+    if args[1] == "setup" {
+        setup();
+        return;
+    }
+
     let engine = if args.len() > 2 {
         match args[2].as_str() {
             "g4" => "gpt-4",
@@ -54,7 +69,11 @@ fn main() {
     let text = fs::read_to_string(text_file_path).expect("Failed to read the text");
     let bpe = cl100k_base().unwrap();
     let token_count = bpe.encode_with_special_tokens(&text).len();
-    let parent_prompt = "Summarise the following in 300 tokens or less. Give your best attempt.";
+    let config = load_config();
+    let parent_prompt = match config {
+        Some(config) => config.parent_prompt,
+        None => "Summarise the following in 300 tokens or less. Give your best attempt.".to_string(),
+    };
     let parent_prompt_token_count = bpe.encode_with_special_tokens(&parent_prompt).len();
     let total_tokens = token_count + parent_prompt_token_count;
     println!("Number of tokens in the text file: {}", token_count);
@@ -77,9 +96,6 @@ fn main() {
         );
         return;
     }
-
-
-
 
     match env::var("OPENAI_API_KEY") {
         Ok(api_key) => {
@@ -129,6 +145,30 @@ fn main() {
                  ═══════════════════════════════════════════════════════════════".color("red")
             );
         }
+    }
+}
+
+fn setup() {
+    println!("{}", "Setting up ChatterPipe...".color("cyan"));
+    println!("{}", "Enter your custom parent prompt: ".color("yellow"));
+    let mut parent_prompt = String::new();
+    std::io::stdin().read_line(&mut parent_prompt).expect("Failed to read parent prompt");
+
+    let config = Config { parent_prompt };
+    let toml = toml::to_string(&config).unwrap();
+    let mut file = File::create("ctp.toml").expect("Failed to create ctp.toml");
+    file.write_all(toml.as_bytes()).expect("Failed to write ctp.toml");
+
+    println!("{}", "Configuration saved in ctp.toml.".color("cyan"));
+}
+
+fn load_config() -> Option<Config> {
+    if Path::new("ctp.toml").exists() {
+        let toml_str = fs::read_to_string("ctp.toml").expect("Failed to read ctp.toml");
+        let config: Config = toml::from_str(&toml_str).expect("Failed to parse ctp.toml");
+        Some(config)
+    } else {
+        None
     }
 }
 
