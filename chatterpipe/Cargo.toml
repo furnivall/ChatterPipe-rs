@@ -9,7 +9,7 @@ repository = "https://github.com/furnivall/chatterpipe-rs"
 keywords = ["gpt", "cli", "gpt-4", "communication"]
 categories = ["command-line-utilities", "networking", "ml"]
 [[bin]]
-name = "cp"
+name = "ctp"
 path = "src/main.rs"
 
 [dependencies]
