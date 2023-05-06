@@ -6,7 +6,9 @@ Install ChatterPipe using cargo:
 `cargo install chatterpipe`
 
 ## Setup/Configuration
-Before using ChatterPipe for the first time (or at any time of your choice), run the setup command to configure your custom parent prompt.
+Before using ChatterPipe for the first time (or at any time of your choice), run the setup command to configure your custom parent prompt:
+`ctp setup`
+
 The default prompt is as follows: 
 ```
 Summarise the following in 300 tokens or less. Give your best attempt
