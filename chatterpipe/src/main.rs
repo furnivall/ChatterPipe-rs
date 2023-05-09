@@ -12,6 +12,7 @@ use std::io::prelude::*;
 use toml;
 use directories::ProjectDirs;
 use std::fs::create_dir_all;
+use std::path::Path;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
@@ -78,6 +79,9 @@ fn main() {
 
     let text_file_path = &args[1];
     let text = fs::read_to_string(text_file_path).expect("Failed to read the text");
+    let path = Path::new(text_file_path);
+    let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
+    let text = format!("{}\n{}", file_name, text);
     let bpe = cl100k_base().unwrap();
     let token_count = bpe.encode_with_special_tokens(&text).len();
     let config = load_config();
