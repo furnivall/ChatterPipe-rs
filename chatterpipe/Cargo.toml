@@ -1,6 +1,6 @@
 [package]
 name = "chatterpipe"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 authors = ["Danny Furnivall <danielfurnivall@gmail.com>"]
 description = "Effortlessly extract AI-generated insights from your text files! This Rust-based CLI tool sends your text content to OpenAI's ChatCompletion API and pipes the output into your desired destination. Unleash the power of AI in your projects and enhance your text-processing workflows with ChatterPipe-rs. All you need is your OpenAI API key."
