@@ -9,7 +9,6 @@ use tiktoken_rs::cl100k_base;
 use colored::*;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::Path;
 use toml;
 use directories::ProjectDirs;
 use std::fs::create_dir_all;
@@ -52,7 +51,17 @@ fn main() {
         setup();
         return;
     }
-
+    if args[1] == "current" {
+        show_current_parent_prompt();
+        return;
+    }
+    let mut parent_prompt_arg = None;
+    for i in 1..args.len() - 1 {
+        if args[i] == "-p" {
+            parent_prompt_arg = Some(args[i + 1].clone());
+            break;
+        }
+    }
     let engine = if args.len() > 2 {
         match args[2].as_str() {
             "g4" => "gpt-4",
@@ -72,9 +81,12 @@ fn main() {
     let bpe = cl100k_base().unwrap();
     let token_count = bpe.encode_with_special_tokens(&text).len();
     let config = load_config();
-    let parent_prompt = match config {
-        Some(config) => config.parent_prompt,
-        None => "Summarise the following in 300 tokens or less. Give your best attempt.".to_string(),
+    let parent_prompt = match parent_prompt_arg {
+        Some(prompt) => prompt,
+        None => match config {
+            Some(config) => config.parent_prompt,
+            None => "Summarise the following in 300 tokens or less. Give your best attempt.".to_string(),
+        },    
     };
     let parent_prompt_token_count = bpe.encode_with_special_tokens(&parent_prompt).len();
     let total_tokens = token_count + parent_prompt_token_count;
@@ -181,6 +193,18 @@ fn load_config() -> Option<Config> {
         Some(config)
     } else {
         None
+    }
+}
+
+fn show_current_parent_prompt() {
+    let config = load_config();
+    match config {
+        Some(config) => {
+            println!("Current parent prompt: {}", config.parent_prompt);
+        }
+        None => {
+            println!("No custom parent prompt set. Using default parent prompt.");
+        }
     }
 }
 
