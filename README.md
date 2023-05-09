@@ -14,6 +14,15 @@ The default prompt is as follows:
 Summarise the following in 300 tokens or less. Give your best attempt
 ```
 
+You can also set a custom parent prompt for a single command using the `-p` option:
+`ctp <text_file_path> -p "Your custom parent prompt"`
+
+An example of a possible use case for this would be something along the lines of:
+`ctp <yaml file> -p "lint this file for me"`
+
+To view the current parent prompt, run:
+`ctp current`
+
 ## Usage
 Run ChatterPipe with the following command:
 ```ctp <text_file_path> [--engine <engine>] [--raw]```
