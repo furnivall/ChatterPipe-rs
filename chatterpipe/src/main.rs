@@ -167,6 +167,7 @@ fn main() {
     }
 }
 
+// Sets up the configuration for the application
 fn setup() {
     let proj_dirs = ProjectDirs::from("", "", "ChatterPipe")
         .expect("Failed to find config directory.");
@@ -187,6 +188,7 @@ fn setup() {
     println!("{}", "Configuration saved in ctp.toml.".color("cyan"));
 }
 
+// Loads the configuration from the file
 fn load_config() -> Option<Config> {
     let proj_dirs = ProjectDirs::from("", "", "ChatterPipe")
         .expect("Failed to find config directory.");
@@ -201,6 +203,7 @@ fn load_config() -> Option<Config> {
     }
 }
 
+// Shows the current parent prompt
 fn show_current_parent_prompt() {
     let config = load_config();
     match config {
@@ -213,6 +216,7 @@ fn show_current_parent_prompt() {
     }
 }
 
+// Queries the chat API and returns the response
 fn query_chat_completion_api(api_key: String, chat_completion_request_body: ChatCompletionRequestBody, raw_response_flag: bool) -> Result<ChatCompletionResponse, Box<dyn std::error::Error>> {
     let client = reqwest::blocking::Client::builder().timeout(std::time::Duration::from_secs(300)).build()?;
 
