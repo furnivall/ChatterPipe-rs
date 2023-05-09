@@ -2,17 +2,18 @@ extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 
+use colored::*;
+use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
-use tiktoken_rs::cl100k_base;
-use colored::*;
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
-use toml;
-use directories::ProjectDirs;
-use std::fs::create_dir_all;
 use std::path::Path;
+use tiktoken_rs::cl100k_base;
+use toml;
+
+const DEFAULT_PARENT_PROMPT: &str = "Summarise the following in 300 tokens or less. Give your best attempt.";
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
@@ -89,7 +90,7 @@ fn main() {
         Some(prompt) => prompt,
         None => match config {
             Some(config) => config.parent_prompt,
-            None => "Summarise the following in 300 tokens or less. Give your best attempt.".to_string(),
+            None => DEFAULT_PARENT_PROMPT.to_string(),
         },    
     };
     let parent_prompt_token_count = bpe.encode_with_special_tokens(&parent_prompt).len();
