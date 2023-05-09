@@ -11,6 +11,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use toml;
+use directories::ProjectDirs;
+use std::fs::create_dir_all;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
@@ -149,6 +151,12 @@ fn main() {
 }
 
 fn setup() {
+    let proj_dirs = ProjectDirs::from("", "", "ChatterPipe")
+        .expect("Failed to find config directory.");
+    let config_dir = proj_dirs.config_dir();
+    create_dir_all(config_dir).expect("Failed to create config directory.");
+
+    let config_path = config_dir.join("ctp.toml");
     println!("{}", "Setting up ChatterPipe...".color("cyan"));
     println!("{}", "Enter your custom parent prompt: ".color("yellow"));
     let mut parent_prompt = String::new();
@@ -156,15 +164,19 @@ fn setup() {
 
     let config = Config { parent_prompt };
     let toml = toml::to_string(&config).unwrap();
-    let mut file = File::create("ctp.toml").expect("Failed to create ctp.toml");
+    let mut file = File::create(&config_path).expect("Failed to create ctp.toml");
     file.write_all(toml.as_bytes()).expect("Failed to write ctp.toml");
 
     println!("{}", "Configuration saved in ctp.toml.".color("cyan"));
 }
 
 fn load_config() -> Option<Config> {
-    if Path::new("ctp.toml").exists() {
-        let toml_str = fs::read_to_string("ctp.toml").expect("Failed to read ctp.toml");
+    let proj_dirs = ProjectDirs::from("", "", "ChatterPipe")
+        .expect("Failed to find config directory.");
+    let config_path = proj_dirs.config_dir().join("ctp.toml");
+
+    if config_path.exists() {
+        let toml_str = fs::read_to_string(&config_path).expect("Failed to read ctp.toml");
         let config: Config = toml::from_str(&toml_str).expect("Failed to parse ctp.toml");
         Some(config)
     } else {
