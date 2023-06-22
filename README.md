@@ -1,5 +1,5 @@
 # ChatterPipe-rs
-ChatterPipe is a CLI tool that lets you interact with powerful language models like GPT-4 to summarize text files. Just provide a text file as input and let ChatterPipe do its magic!
+ChatterPipe is a CLI tool that lets you interact with powerful language models like GPT-4 for single shot prompting using text files and temporary/permanently configurable parent prompts. Just provide a text file as input and let ChatterPipe do its magic!
 
 ## Installation
 Install ChatterPipe using cargo:
